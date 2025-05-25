@@ -1,8 +1,10 @@
 extends Node2D
 
-const width = 1152
-const height = 648
+const width = 108
+const height = 72
 const count = 8
+const scaler = 10
+const pix_size = 10
 
 var points: Array[int]
 var pointq: Array[int]
@@ -19,11 +21,12 @@ var biome_colours = {
 }
 
 func _draw():
-	draw_rect(Rect2(0,0,width,height), Color.WHITE)
+	draw_rect(Rect2(0,0,width*scaler,height*scaler), Color.WHITE)
 	points = []
 	points.resize(width*height)
 	points.fill(0)
-	pointq = points.duplicate()
+	for i in width*height:
+		pointq.append(i)
 	nodes = []
 	#var n1 = Node2D.new()
 	#n1.position = Vector2(0,0)
@@ -55,7 +58,7 @@ func _draw():
 		nodes.append(node)
 
 	for i in count:
-		var shortest = 9223372036854775807
+		var shortest: float = 99999999999999
 		var sj = i
 		for j in count:
 			if j == i:
@@ -64,15 +67,31 @@ func _draw():
 			if dist < shortest:
 				shortest = dist
 				sj = j
-		draw_circle(nodes[i].position, shortest/2, biome_colours[i%biome_colours.size()])
-		#get_all_points_in_radius(nodes[i].position, shortest/2)
+		#draw_circle(nodes[i].position, shortest/2, biome_colours[i%biome_colours.size()])
+		var list = get_pointq_neighborhood(nodes[i].position, shortest/2)
+		for vec in list:
+			draw_circle(Vector2(vec.x*scaler, vec.y*scaler), pix_size, biome_colours[i%biome_colours.size()])
 		
 		
+		
+func get_pointq_neighborhood(v:Vector2, r:float):
+	var list = []
+	
+	for p in pointq:
+		var target = qpoint_to_vector(p)
+		if v.distance_to(target) <= r:
+			list.append(target)
+	return list
 			
-			
-			
 		
 		
+func qpoint_to_vector(p):
+		var x = p%width
+		var y = p/width
+		return Vector2(x,y)
+	
+func vector_to_qpoint(v):
+	return v.y*width + v.x
 		
 		
 		
