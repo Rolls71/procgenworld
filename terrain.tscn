@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://w30b2x2xlyxp"]
+
+[ext_resource type="Script" uid="uid://cfa3q2nbvylr1" path="res://web.gd" id="1_206su"]
+
+[node name="Terrain" type="Node2D"]
+
+[node name="Polygon2D" type="Polygon2D" parent="."]
+z_index = -1
+polygon = PackedVector2Array(0, 0, 1152, 0, 1152, 648, 0, 648)
+
+[node name="Web" type="Node2D" parent="."]
+script = ExtResource("1_206su")
