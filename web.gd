@@ -5,8 +5,8 @@ const HEIGHT = 648
 
 @export var noise_scale = 0.1
 
-var web_width = 115
-var web_height = 64
+var web_width = 230
+var web_height = 128
 @warning_ignore("integer_division")
 var count = web_width*web_height
 
@@ -29,4 +29,7 @@ func _draw():
 	$"../Polygon2D".texture = ImageTexture.create_from_image(noise.get_image(WIDTH, HEIGHT))
 	for point:Node2D in web:
 		@warning_ignore("integer_division")
-		draw_circle(point.position, 2, Color(1,0,0))
+		var value = noise.get_noise_2dv(point.position)
+		draw_circle(point.position, 2, Color(3*((value+1)/2),0,1-3*((value+1)/2)))
+		# Compare to neighbours and only draw if greatest of neighbours
+		print(value)
