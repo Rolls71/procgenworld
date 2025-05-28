@@ -38,7 +38,6 @@ func _draw():
 	#n4.position = Vector2(width, height)
 	#nodes.append_array([n1, n2, n3, n4])
 	for i in count:
-		var border
 		var node: Node2D = Node2D.new()
 		var x = randi()%width
 		var y = randi()%height
@@ -59,14 +58,12 @@ func _draw():
 
 	for i in count:
 		var shortest: float = 99999999999999
-		var sj = i
 		for j in count:
 			if j == i:
 				continue
 			var dist = nodes[i].position.distance_to(nodes[j].position)
 			if dist < shortest:
 				shortest = dist
-				sj = j
 		#draw_circle(nodes[i].position, shortest/2, biome_colours[i%biome_colours.size()])
 		var list = get_pointq_neighborhood(nodes[i].position, shortest/2)
 		for vec in list:

@@ -12,7 +12,7 @@ var count = web_width*web_height
 
 var noise: FastNoiseLite
 var web: Array
-var point_resource: Resource = preload("res://point.tscn")
+var point_resource: Resource = preload("res://nodes/point.tscn")
 
 func _init():
 	noise = FastNoiseLite.new()

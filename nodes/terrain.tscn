@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://be4qojyd7d1kp"]
 
-[ext_resource type="Script" uid="uid://cfa3q2nbvylr1" path="res://web.gd" id="1_206su"]
+[ext_resource type="Script" uid="uid://cfa3q2nbvylr1" path="res://nodes/web.gd" id="1_206su"]
 
 [node name="Terrain" type="Node2D"]
 
