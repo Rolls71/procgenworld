@@ -1,6 +1,9 @@
 extends Node2D
 
 @export var random_seed:int
+@export var scalar:float = 10
+
+var noise: FastNoiseLite
 
 # Declare member variables here. Examples:
 # var a = 2
@@ -22,13 +25,13 @@ func display_polygon(offset:Vector2, polygon:Array[Vector2]):
 	new_polygon.polygon = polygon_points
 	var rand_gen = RandomNumberGenerator.new()
 	rand_gen.seed = random_seed
-	new_polygon.color = Color(rand_gen.randf(), rand_gen.randf(), rand_gen.randf(), 1)
+	new_polygon.color = Color(0,noise.get_noise_2dv(polygon_points[0]), 1-noise.get_noise_2dv(polygon_points[0]), 1)
 	random_seed = rand_gen.randi()
 	add_child(new_polygon)
 	pass
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	pass # Replace with function body.
+	noise = FastNoiseLite.new()
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
