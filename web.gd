@@ -16,7 +16,8 @@ var point_resource: Resource = preload("res://point.tscn")
 
 func _init():
 	noise = FastNoiseLite.new()
-	noise.noise_type = FastNoiseLite.TYPE_CELLULAR
+	#noise.noise_type = FastNoiseLite.TYPE_CELLULAR
+	
 	web = []
 	for i in count:
 		var p = point_resource.instantiate()
@@ -26,10 +27,10 @@ func _init():
 		web.append(p)
 
 func _draw():
-	$"../Polygon2D".texture = ImageTexture.create_from_image(noise.get_image(WIDTH, HEIGHT))
+	#$"../Polygon2D".texture = ImageTexture.create_from_image(noise.get_image(WIDTH, HEIGHT))
 	for point:Node2D in web:
 		@warning_ignore("integer_division")
 		var value = noise.get_noise_2dv(point.position)
-		draw_circle(point.position, 2, Color(3*((value+1)/2),0,1-3*((value+1)/2)))
+		draw_circle(point.position, 4, Color(value,0,1-value))
 		# Compare to neighbours and only draw if greatest of neighbours
 		print(value)
