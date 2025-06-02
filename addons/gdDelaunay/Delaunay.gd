@@ -80,7 +80,7 @@ class Triangle:
 class VoronoiSite:
 	var center: Vector2
 	var polygon: PackedVector2Array # points in absolute position, clockwise
-	var source_triangles: Array # of Triangle's that create this site internally
+	var source_triangles: Array[Triangle] # of Triangle's that create this site internally
 	var neighbours: Array[VoronoiEdge]
 	
 	func _init(center: Vector2):
@@ -218,8 +218,8 @@ func remove_border_sites(sites: Array) -> void:
 		sites.erase(border_site)
 
 
-func triangulate() -> Array: # of Triangle
-	var triangulation: Array # of Triangle
+func triangulate() -> Array[Triangle]:
+	var triangulation: Array[Triangle]
 	
 	# calculate rectangle if none
 	if !(_rect.has_area()):
@@ -228,8 +228,8 @@ func triangulate() -> Array: # of Triangle
 	triangulation.append(_rect_super_triangle1)
 	triangulation.append(_rect_super_triangle2)
 	
-	var bad_triangles: Array # of Triangle
-	var polygon: Array # of Edge
+	var bad_triangles: Array[Triangle]
+	var polygon: Array[Edge]
 	
 	for point in points:
 		bad_triangles.clear()
@@ -246,11 +246,11 @@ func triangulate() -> Array: # of Triangle
 	return triangulation
 
 
-func make_voronoi(triangulation: Array) -> Array[VoronoiSite]: # of VoronoiSite
+func make_voronoi(triangulation: Array) -> Array[VoronoiSite]:
 	var sites: Array[VoronoiSite]
 
-	var completion_counter: Array # of Vector2, no PackedVector2Array to allow more oeprations
-	var triangle_usage: Dictionary # of Triangle and Array[VoronoiSite], used for neighbour scan
+	var completion_counter: Array[Vector2] # no PackedVector2Array to allow more oeprations
+	var triangle_usage: Dictionary[Triangle, Array] # of Triangle and Array[VoronoiSite], used for neighbour scan
 	for triangle in triangulation:
 		triangle_usage[triangle] = []
 		
@@ -301,7 +301,7 @@ func make_voronoi(triangulation: Array) -> Array[VoronoiSite]: # of VoronoiSite
 
 # ==== PRIVATE FUNCTIONS ====	
 func _make_outer_polygon(triangles: Array, out_polygon: Array) -> void:
-	var duplicates: Array # of Edge
+	var duplicates: Array[Edge] # of Edge
 	
 	for triangle in triangles:
 		out_polygon.append(triangle.edge_ab)

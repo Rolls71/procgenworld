@@ -3,12 +3,10 @@ extends Node2D
 const CHUNK_WIDTH = 16
 const CHUNK_HEIGHT = 16
 
-const Delaunay = preload("res://addons/gdDelaunay/Delaunay.gd")
-
 @export var point_variance = 0.4
 @export var view_scale = 100
 
-var tile = preload("res://nodes/tile.tscn")
+var tileNode = preload("res://nodes/tile.tscn")
 
 var rng:RandomNumberGenerator
 var delaunay:Delaunay
@@ -21,10 +19,11 @@ func _ready():
 	
 	for x in CHUNK_WIDTH:
 		for y in CHUNK_HEIGHT:
-			var t:Tile = tile.instantiate()
+			var t:Tile = tileNode.instantiate()
 			var pos = Vector2(
 				x+rng.randf()*point_variance,
 				y+rng.randf()*point_variance)
+			@warning_ignore("integer_division")
 			t.construct(x%CHUNK_WIDTH+y/CHUNK_HEIGHT, pos)
 			delaunay.add_point(pos)
 			tiles.append(t)
