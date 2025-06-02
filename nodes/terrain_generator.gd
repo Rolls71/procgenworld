@@ -3,6 +3,8 @@ extends Node2D
 const CHUNK_WIDTH = 16
 const CHUNK_HEIGHT = 16
 
+const Delaunay = preload("res://addons/gdDelaunay/Delaunay.gd")
+
 @export var point_variance = 0.4
 @export var view_scale = 100
 
@@ -11,6 +13,7 @@ var tile = preload("res://nodes/tile.tscn")
 var rng:RandomNumberGenerator
 var delaunay:Delaunay
 var tiles:Array[Tile]
+var posDict = {}
 
 func _ready():
 	rng = RandomNumberGenerator.new()
@@ -25,10 +28,24 @@ func _ready():
 			t.construct(x%CHUNK_WIDTH+y/CHUNK_HEIGHT, pos)
 			delaunay.add_point(pos)
 			tiles.append(t)
-	var sites = delaunay.make_voronoi(delaunay.triangulate())
+			posDict[pos] = [t]
+	var sites:Array[Delaunay.VoronoiSite] = delaunay.make_voronoi(delaunay.triangulate())
+	
+	## Link voronoi sites and tiles
 	for i in sites.size():
-		show_site(sites[i])
-		
+		var site = sites[i]
+		show_site(site)
+		if posDict.has(site.center):
+			posDict[site.center].append(site)
+	for key in posDict:
+		var tile:Tile = posDict[key][0]
+		var edges:Array[Delaunay.VoronoiEdge] = posDict[key][1].neighbours
+		for edge in edges:
+			var site:Delaunay.VoronoiSite = edge.other
+			if not tile.test_adjacency(site.center):
+				tile.neighbours.append(posDict[site.center][0])
+
+
 func show_site(site: Delaunay.VoronoiSite):
 	var polygon = Polygon2D.new()
 	var p = site.polygon
