@@ -67,7 +67,7 @@ func update_with(other_domain):
 			domain.remove_at(i)
 	
 	if entropy() == 0:
-		push_error("No valid terrain choices at ",position)
+		domain.append(TileTerrain.domain().pick_random())
 	
 	is_collapsed = (entropy() == 1)
 	if is_collapsed:

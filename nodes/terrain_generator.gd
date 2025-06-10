@@ -8,17 +8,17 @@ const STEP_TIMER = false
 @export var point_variance = 0.4
 @export var view_scale = 30
 
-var tileNode = preload("res://nodes/tile.tscn")
+signal terrain_generation_complete
 
-var rng:RandomNumberGenerator
-var delaunay:Delaunay
+var tileNode = preload("res://nodes/tile.tscn")
+var structure_layer = preload("res://nodes/terrain_generator.tscn")
+
+@onready var rng:RandomNumberGenerator = RandomNumberGenerator.new()
+@onready var delaunay:Delaunay = Delaunay.new(Rect2(0,0,CHUNK_WIDTH,CHUNK_HEIGHT))
 var tiles:Array[Tile]
 var posDict = {}
 
-func _ready():
-	rng = RandomNumberGenerator.new()
-	delaunay = Delaunay.new(Rect2(0,0,CHUNK_WIDTH,CHUNK_HEIGHT))
-	
+func _ready():	
 	for x in CHUNK_WIDTH:
 		for y in CHUNK_HEIGHT:
 			var t:Tile = tileNode.instantiate()
@@ -76,7 +76,9 @@ func _ready():
 			remaining.remove_at(i)
 		if STEP_TIMER:
 			await get_tree().create_timer(STEP_TIME).timeout
-	print("Finished Generating!")
+	
+	print("Finished generating terrain!")
+	emit_signal("terrain_generation_complete")
 		
 func show_site(tile:Tile):
 	var site = tile.site
