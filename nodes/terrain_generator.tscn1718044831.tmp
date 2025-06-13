@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://bkxad7j2ld7pe"]
+
+[ext_resource type="Script" uid="uid://rbsw01t6olpc" path="res://nodes/terrain_generator.gd" id="1_b38l2"]
+[ext_resource type="PackedScene" uid="uid://b0f5y874fox5e" path="res://nodes/structure_layer.tscn" id="2_lp6f1"]
+
+[node name="TerrainGenerator" type="Node2D"]
+script = ExtResource("1_b38l2")
+
+[node name="StructureLayer" parent="." instance=ExtResource("2_lp6f1")]
+
+[connection signal="terrain_generation_complete" from="." to="StructureLayer" method="_on_terrain_generation_complete"]

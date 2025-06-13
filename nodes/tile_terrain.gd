@@ -23,19 +23,3 @@ func _init(type:int):
 static func domain():
 	var arr:Array[int] = [SEA, BEACH, GRASS, TREES]
 	return arr
-	
-static func get_valid_adjacent_terrains(test_terrain):
-	var valid_terrains = []
-	for potential_terrain in domain():
-		if can_be_adjacent(test_terrain, potential_terrain):
-			valid_terrains.append(potential_terrain)
-	return valid_terrains
-
-static func can_be_adjacent(a:int, b:int):
-	if a == b:
-		return true
-	if a+1 == b:
-		return true
-	if a == b+1:
-		return true
-	return false
