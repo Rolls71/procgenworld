@@ -70,9 +70,9 @@ func _ready():
 			if neighbour.terrain_type:
 				set_tiles.append(neighbour)
 		if set_tiles.size() > 0:
-			show_site(tile.collapse_to(set_tiles.pick_random().terrain_type))
+			tile.collapse_to(set_tiles.pick_random().terrain_type)
 		else:
-			show_site(tile.collapse())
+			tile.collapse()
 			
 		if STEP_TIMER:
 			await get_tree().create_timer(STEP_TIME).timeout
@@ -80,12 +80,11 @@ func _ready():
 	
 	print("Finished generating terrain in ", (last_time-start_time)/1000.0, " secs")
 	emit_signal("terrain_generation_complete")
+	show_triangulation()
 	
 		
-func show_site(tile:Tile):
-	var site = tile.site
-	var triangles:Array[Delaunay.Triangle] = site.source_triangles
-	for triangle in triangles:
+func show_triangulation():
+	for triangle in triangulation:
 		if delaunay.is_border_triangle(triangle):
 			continue
 		var polygon = Polygon2D.new()
@@ -100,7 +99,14 @@ func show_site(tile:Tile):
 		for each in packed:
 			temp.append(each*view_scale)
 		polygon.polygon = temp
-		polygon.color = tile.terrain_type.colour
+		
+		var colours = [
+			posDict[triangle.a][0].terrain_type.colour,
+			posDict[triangle.b][0].terrain_type.colour,
+			posDict[triangle.c][0].terrain_type.colour,
+			posDict[triangle.a][0].terrain_type.colour,
+			]
+		polygon.vertex_colors = PackedColorArray(colours)
 		polygon.z_index = -1
 		add_child(polygon)
 
