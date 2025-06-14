@@ -1,12 +1,12 @@
 extends Node2D
 
-const CHUNK_WIDTH = 16
-const CHUNK_HEIGHT = 16
-const STEP_TIME = 0.5
+const CHUNK_WIDTH = 32
+const CHUNK_HEIGHT = 32
+const STEP_TIME = 0.01
 const STEP_TIMER = false
 
 @export var point_variance = 0.4
-@export var view_scale = 30
+@export var view_scale = 15
 
 signal terrain_generation_complete
 
@@ -17,8 +17,14 @@ var structure_layer = preload("res://nodes/terrain_generator.tscn")
 @onready var delaunay:Delaunay = Delaunay.new(Rect2(0,0,CHUNK_WIDTH,CHUNK_HEIGHT))
 var tiles:Array[Tile]
 var posDict = {}
+var start_time
+var last_time
 
 func _ready():	
+	start_time = Time.get_ticks_msec()
+	last_time = start_time
+	
+	print("Start generating terrain")
 	for x in CHUNK_WIDTH:
 		for y in CHUNK_HEIGHT:
 			var t:Tile = tileNode.instantiate()
@@ -30,7 +36,14 @@ func _ready():
 			delaunay.add_point(pos)
 			tiles.append(t)
 			posDict[pos] = [t]
-	var sites:Array[Delaunay.VoronoiSite] = delaunay.make_voronoi(delaunay.triangulate())
+			
+	time_check("Instantiated tiles")
+	
+	var triangulation = delaunay.triangulate()
+	time_check("Calculated Delaunay triangulation")
+	
+	var sites:Array[Delaunay.VoronoiSite] = delaunay.make_voronoi(triangulation)
+	time_check("Generated Voronoi sites")
 	
 	## Link voronoi sites and tiles
 	for site in sites:
@@ -44,6 +57,7 @@ func _ready():
 			var site:Delaunay.VoronoiSite = edge.other
 			if not tile.test_adjacency(site.center):
 				tile.neighbours.append(posDict[site.center][0])
+	time_check("Linked sites")
 	
 	## Set tiles
 	var remaining = tiles.duplicate()
@@ -60,8 +74,9 @@ func _ready():
 			
 		if STEP_TIMER:
 			await get_tree().create_timer(STEP_TIME).timeout
+	time_check("Displayed sites")
 	
-	print("Finished generating terrain!")
+	print("Finished generating terrain in ", (last_time-start_time)/1000.0, " secs")
 	emit_signal("terrain_generation_complete")
 		
 func show_site(tile:Tile):
@@ -76,3 +91,8 @@ func show_site(tile:Tile):
 	polygon.color = tile.terrain_type.colour
 	polygon.z_index = -1
 	add_child(polygon)
+	
+func time_check(msg):
+	var t = Time.get_ticks_msec()
+	print(msg," in ", (t-last_time)/1000.0, " secs")
+	last_time = t

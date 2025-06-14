@@ -14,4 +14,3 @@ func _on_terrain_generation_complete():
 		var t = tower.instantiate()
 		t.position = tiles.pick_random().position*30
 		add_child(t)
-		print(t.position)
