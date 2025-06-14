@@ -7,5 +7,7 @@
 script = ExtResource("1_b38l2")
 
 [node name="StructureLayer" parent="." instance=ExtResource("2_lp6f1")]
+visible = false
+position = Vector2(4.805, 0)
 
 [connection signal="terrain_generation_complete" from="." to="StructureLayer" method="_on_terrain_generation_complete"]
