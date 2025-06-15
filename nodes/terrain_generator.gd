@@ -1,12 +1,12 @@
 extends Node2D
 
-const CHUNK_WIDTH = 8
-const CHUNK_HEIGHT = 8
+const CHUNK_WIDTH = 16
+const CHUNK_HEIGHT = 16
 const STEP_TIME = 0.01
 const STEP_TIMER = false
 
 @export var point_variance = 0.4
-@export var view_scale = 80
+@export var view_scale = CHUNK_WIDTH*2.5
 
 signal terrain_generation_complete
 
@@ -103,10 +103,13 @@ func show_triangulation():
 		var colours = [
 			posDict[triangle.a][0].terrain_type.colour,
 			posDict[triangle.b][0].terrain_type.colour,
-			posDict[triangle.c][0].terrain_type.colour,
-			posDict[triangle.a][0].terrain_type.colour,
+			posDict[triangle.c][0].terrain_type.colour
 			]
-		polygon.vertex_colors = PackedColorArray(colours)
+		var avg_colour = Color.BLACK
+		for colour in colours:
+			avg_colour += colour
+		avg_colour /= colours.size()
+		polygon.color = avg_colour
 		polygon.z_index = -1
 		add_child(polygon)
 
