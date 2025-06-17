@@ -2,8 +2,9 @@ extends Resource
 class_name Web
 
 # ==== CONSTANTS ====
-const EDGE_MIN: float
-const EDGE_MAX: float
+const EDGE_MIN: float = 40
+const EDGE_MAX: float = 100
+const POISSON_SAMPLE_ATTEMPTS: float = 15.0
 
 # ==== CLASSES ====
 
@@ -12,7 +13,7 @@ class Vertex:
 	var edges: Array[Edge]
 	var triangles: Array[Triangle]
 	
-	func _init(a:Vector2):
+	func _init(pos:Vector2):
 		self.pos = pos
 		
 	func equals(vertex:Vertex) -> bool:
@@ -104,7 +105,24 @@ class Chunk:
 		self.x = chunk_x
 		self.y = chunk_y
 		self.borders = chunk_borders
-		# TODO: generate web chunk
+		vertices = []
+		edges = []
+		triangles = []
+		var corners = [
+			borders.position, 
+			borders.position+Vector2(borders.size[0], 0),
+			borders.position+Vector2(borders.size[0], borders.size[1]),
+			borders.position+Vector2(0, borders.size[1]),
+		]
+		var points = PoissonDiscSampling.generate_points_for_polygon(
+			PackedVector2Array(corners), 
+			EDGE_MIN, 
+			POISSON_SAMPLE_ATTEMPTS
+		)
+
+		for point in points:
+			vertices.append(Vertex.new(point))
+		
 
 # ==== PUBLIC VARIABLES =====
 var vertices: Array[Vertex]
@@ -114,6 +132,9 @@ var chunks: Array[Chunk]
 
 # ==== CONSTRUCTOR =====
 func _init():
-	pass
+	chunks = [Chunk.new(0,0,Rect2(0,0,1920,1080))]
+	
+	
+
 
 # ==== PUBLIC FUNCTIONS ====
