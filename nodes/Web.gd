@@ -13,8 +13,8 @@ class Vertex:
 	var edges: Array[Edge]
 	var triangles: Array[Triangle]
 	
-	func _init(pos:Vector2):
-		self.pos = pos
+	func _init(position:Vector2):
+		self.pos = position
 		
 	func equals(vertex:Vertex) -> bool:
 		return (self.pos == vertex.pos)
@@ -23,9 +23,9 @@ class Edge:
 	var a: Vertex
 	var b: Vertex
 	
-	func _init(a: Vertex, b: Vertex):
-		self.a = a
-		self.b = b
+	func _init(_a: Vertex, _b: Vertex):
+		self.a = _a
+		self.b = _b
 		
 	func equals(edge: Edge) -> bool:
 		return ((a.pos == edge.a.pos && b.pos == edge.b.pos) || 
