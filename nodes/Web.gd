@@ -4,7 +4,7 @@ class_name Web
 # ==== CONSTANTS ====
 const EDGE_MIN: float = 40
 const EDGE_MAX: float = 100
-const POISSON_SAMPLE_ATTEMPTS: float = 15.0
+const POISSON_SAMPLE_ATTEMPTS: int = 15
 
 # ==== CLASSES ====
 
@@ -45,37 +45,37 @@ class Triangle:
 	
 	var ab: Edge
 	var bc: Edge
-	var ca: Edge
+	var ac: Edge
 	
 	var center: Vector2
 	var radius_sqr: float
 	
-	func _init(a: Vector2, b: Vector2, c: Vector2):
-		self.a = Vertex.new(a)
-		self.b = Vertex.new(b)
-		self.c = Vertex.new(c)
+	func _init(_a: Vector2, _b: Vector2, _c: Vector2):
+		self.a = Vertex.new(_a)
+		self.b = Vertex.new(_b)
+		self.c = Vertex.new(_c)
 		ab = Edge.new(self.a,self.b)
 		bc = Edge.new(self.b,self.c)
-		ca = Edge.new(self.c,self.a)
+		ac = Edge.new(self.c,self.a)
 		recalculate_circumcircle()
 	
 	
 	func recalculate_circumcircle() -> void:
-		var ab := a.pos.length_squared()
-		var cd := b.pos.length_squared()
-		var ef := c.pos.length_squared()
+		var _ab := a.pos.length_squared()
+		var _cd := b.pos.length_squared()
+		var _ef := c.pos.length_squared()
 		
 		var cmb := c.pos - b.pos
 		var amc := a.pos - c.pos
 		var bma := b.pos - a.pos
 	
 		var circum := Vector2(
-			(ab * cmb.y + cd * amc.y + ef * bma.y) / (a.x * cmb.y + b.x * amc.y + c.x * bma.y),
-			(ab * cmb.x + cd * amc.x + ef * bma.x) / (a.y * cmb.x + b.y * amc.x + c.y * bma.x)
+			(_ab * cmb.y + _cd * amc.y + _ef * bma.y) / (a.pos.x * cmb.y + b.pos.x * amc.y + c.pos.x * bma.y),
+			(_ab * cmb.x + _cd * amc.x + _ef * bma.x) / (a.pos.y * cmb.x + b.pos.y * amc.x + c.pos.y * bma.x)
 		)
 	
 		center = circum * 0.5
-		radius_sqr = a.distance_squared_to(center)
+		radius_sqr = a.pos.distance_squared_to(center)
 	
 	func is_point_inside_circumcircle(point: Vector2) -> bool:
 		return center.distance_squared_to(point) < radius_sqr
@@ -87,27 +87,25 @@ class Triangle:
 		if corner.pos == a.pos:
 			return bc
 		elif corner.pos == b.pos:
-			return ca
+			return ac
 		elif corner.pos == c.pos:
 			return ab
 		else:
 			return null
 
 class Chunk:
-	var vertices: Array[Vertex]
-	var edges: Array[Edge]
-	var triangles: Array[Triangle]
+	var vertices: Array[Vertex] = []
+	var edges: Array[Edge] = []
+	var triangles: Array[Triangle] = []
 	var borders: Rect2
 	var x: int
 	var y: int
 	
 	func _init(chunk_x, chunk_y, chunk_borders):
-		self.x = chunk_x
-		self.y = chunk_y
-		self.borders = chunk_borders
-		vertices = []
-		edges = []
-		triangles = []
+		x = chunk_x
+		y = chunk_y
+		borders = chunk_borders
+		
 		var corners = [
 			borders.position, 
 			borders.position+Vector2(borders.size[0], 0),
@@ -119,20 +117,38 @@ class Chunk:
 			EDGE_MIN, 
 			POISSON_SAMPLE_ATTEMPTS
 		)
-
+		var delaunay = Delaunay.new(borders)
 		for point in points:
 			vertices.append(Vertex.new(point))
-		
+			delaunay.add_point(point)
+			
+		var triangulation: Array[Delaunay.Triangle] = delaunay.triangulate()
+		for delaunay_triangle in triangulation:
+			triangles.append(
+				Triangle.new(delaunay_triangle.a, delaunay_triangle.b, delaunay_triangle.c)
+			)
+		for triangle in triangles:
+			edges.append(triangle.ab)
+			edges.append(triangle.bc)
+			edges.append(triangle.ac)
+		for i in range(edges.size()-2, -1, -1):
+			for j in range(edges.size()-1, i, -1):
+				if edges[i].equals(edges[j]):
+					edges.remove_at(j)
 
 # ==== PUBLIC VARIABLES =====
 var vertices: Array[Vertex]
 var edges: Array[Edge]
 var triangles: Array[Triangle]
 var chunks: Array[Chunk]
+var display_polygons: Array[Polygon2D]
 
 # ==== CONSTRUCTOR =====
 func _init():
 	chunks = [Chunk.new(0,0,Rect2(0,0,1920,1080))]
+			
+	
+
 	
 	
 
