@@ -50,13 +50,13 @@ class Triangle:
 	var center: Vector2
 	var radius_sqr: float
 	
-	func _init(_a: Vector2, _b: Vector2, _c: Vector2):
-		self.a = Vertex.new(_a)
-		self.b = Vertex.new(_b)
-		self.c = Vertex.new(_c)
-		ab = Edge.new(self.a,self.b)
-		bc = Edge.new(self.b,self.c)
-		ac = Edge.new(self.c,self.a)
+	func _init(_a: Vertex, _b: Vertex, _c: Vertex, _ab: Edge, _bc: Edge, _ac: Edge):
+		self.a = _a
+		self.b = _b
+		self.c = _c
+		ab = _ab
+		bc = _bc
+		ac = _ac
 		recalculate_circumcircle()
 	
 	
@@ -94,9 +94,9 @@ class Triangle:
 			return null
 
 class Chunk:
-	var vertices: Array[Vertex] = []
-	var edges: Array[Edge] = []
-	var triangles: Array[Triangle] = []
+	var vertices: Dictionary[Vector2, Vertex] = {}
+	var edges: Dictionary[Vector4, Edge] = {}
+	var triangles: Dictionary[Vector2, Array] = {}
 	var borders: Rect2
 	var x: int
 	var y: int
@@ -119,22 +119,65 @@ class Chunk:
 		)
 		var delaunay = Delaunay.new(borders)
 		for point in points:
-			vertices.append(Vertex.new(point))
+			vertices[point] = Vertex.new(point)
 			delaunay.add_point(point)
 			
 		var triangulation: Array[Delaunay.Triangle] = delaunay.triangulate()
+		delaunay.remove_border_triangles(triangulation)
 		for delaunay_triangle in triangulation:
-			triangles.append(
-				Triangle.new(delaunay_triangle.a, delaunay_triangle.b, delaunay_triangle.c)
+			var a = delaunay_triangle.a
+			var b = delaunay_triangle.b
+			var c = delaunay_triangle.c
+			
+			# if edge is already chosen, link triangle isntead of new edge
+			var link_edges = []
+			var ab
+			var bc
+			var ac
+			if Vector4(a.x, a.y, b.x, b.y) in edges.keys():
+				link_edges.append(Vector4(a.x, a.y, b.x, b.y))
+				ab = edges[Vector4(a.x, a.y, b.x, b.y)]
+			else:
+				ab = Edge.new(vertices[a], vertices[b])
+				
+			if Vector4(b.x, b.y, c.x, c.y) in edges.keys():
+				link_edges.append(Vector4(b.x, b.y, c.x, c.y))
+				bc = edges[Vector4(b.x, b.y, c.x, c.y)]
+			else:
+				bc = Edge.new(vertices[b], vertices[c])
+				
+			if Vector4(a.x, a.y, c.x, c.y) in edges.keys():
+				link_edges.append(Vector4(a.x, a.y, c.x, c.y))
+				ac = edges[Vector4(a.x, a.y, c.x, c.y)]
+			else:
+				ac = Edge.new(vertices[a], vertices[c])
+			edges[Vector4(a.x, a.y, b.x, b.y)] = ab
+			edges[Vector4(b.x, b.y, c.x, c.y)] = bc
+			edges[Vector4(a.x, a.y, c.x, c.y)] = ac
+			
+			var triangle = Triangle.new(
+				vertices[a], 
+				vertices[b], 
+				vertices[c],
+				ab,
+				bc,
+				ac,
 			)
-		for triangle in triangles:
-			edges.append(triangle.ab)
-			edges.append(triangle.bc)
-			edges.append(triangle.ac)
-		for i in range(edges.size()-2, -1, -1):
-			for j in range(edges.size()-1, i, -1):
-				if edges[i].equals(edges[j]):
-					edges.remove_at(j)
+			
+			if triangle.a.pos in triangles.keys():
+				triangles[triangle.a.pos].append(triangle)
+			else:
+				triangles[triangle.a.pos] = [triangle]
+				
+			if triangle.b.pos in triangles.keys():
+				triangles[triangle.b.pos].append(triangle)
+			else:
+				triangles[triangle.b.pos] = [triangle]
+				
+			if triangle.c.pos in triangles.keys():
+				triangles[triangle.c.pos].append(triangle)
+			else:
+				triangles[triangle.c.pos] = [triangle]
 
 # ==== PUBLIC VARIABLES =====
 var vertices: Array[Vertex]

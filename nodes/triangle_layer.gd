@@ -6,8 +6,7 @@ func _init():
 	web = Web.new()
 	
 func _draw():
-	for edge in web.chunks[0].edges:
+	for edge in web.chunks[0].edges.values():
 		draw_line(edge.a.pos, edge.b.pos, Color.DARK_BLUE)
-		print(edge.a.pos, edge.b.pos)
-	for vertex in web.chunks[0].vertices:
+	for vertex in web.chunks[0].vertices.values():
 		draw_circle(vertex.pos, 5, Color.RED)
