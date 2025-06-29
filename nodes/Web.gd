@@ -22,6 +22,7 @@ class Vertex:
 class Edge:
 	var a: Vertex
 	var b: Vertex
+	var triangles: Array[Triangle]
 	
 	func _init(_a: Vertex, _b: Vertex):
 		self.a = _a
@@ -58,6 +59,7 @@ class Triangle:
 		bc = _bc
 		ac = _ac
 		recalculate_circumcircle()
+		_link_components()
 	
 	
 	func recalculate_circumcircle() -> void:
@@ -92,7 +94,19 @@ class Triangle:
 			return ab
 		else:
 			return null
-
+			
+	func _link_components():
+		_link_component(a)
+		_link_component(b)
+		_link_component(c)
+		_link_component(ab)
+		_link_component(bc)
+		_link_component(ac)
+			
+	func _link_component(component): 
+		if not component.triangles.has(self): 
+			component.triangles.append(self)
+		
 class Chunk:
 	var vertices: Dictionary[Vector2, Vertex] = {}
 	var edges: Dictionary[Vector4, Edge] = {}
