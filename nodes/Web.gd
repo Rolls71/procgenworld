@@ -106,11 +106,15 @@ class Triangle:
 	func _link_component(component): 
 		if not component.triangles.has(self): 
 			component.triangles.append(self)
+			
+	func get_packed_vec_array():
+		var arr = [a.pos, b.pos, c.pos]
+		return PackedVector2Array(arr)
 		
 class Chunk:
 	var vertices: Dictionary[Vector2, Vertex] = {}
 	var edges: Dictionary[Vector4, Edge] = {}
-	var triangles: Dictionary[Vector2, Array] = {}
+	var triangles: Dictionary[Vector2, Triangle] = {}
 	var borders: Rect2
 	var x: int
 	var y: int
@@ -178,20 +182,8 @@ class Chunk:
 				ac,
 			)
 			
-			if triangle.a.pos in triangles.keys():
-				triangles[triangle.a.pos].append(triangle)
-			else:
-				triangles[triangle.a.pos] = [triangle]
-				
-			if triangle.b.pos in triangles.keys():
-				triangles[triangle.b.pos].append(triangle)
-			else:
-				triangles[triangle.b.pos] = [triangle]
-				
-			if triangle.c.pos in triangles.keys():
-				triangles[triangle.c.pos].append(triangle)
-			else:
-				triangles[triangle.c.pos] = [triangle]
+			if triangle.center not in triangles.keys():
+				triangles[triangle.center] = triangle
 
 # ==== PUBLIC VARIABLES =====
 var vertices: Array[Vertex]
