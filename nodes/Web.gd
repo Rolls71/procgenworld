@@ -50,6 +50,7 @@ class Triangle:
 	
 	var center: Vector2
 	var radius_sqr: float
+	var terrain: Terrain
 	
 	func _init(_a: Vertex, _b: Vertex, _c: Vertex, _ab: Edge, _bc: Edge, _ac: Edge):
 		self.a = _a
@@ -60,7 +61,6 @@ class Triangle:
 		ac = _ac
 		recalculate_circumcircle()
 		_link_components()
-	
 	
 	func recalculate_circumcircle() -> void:
 		var _ab := a.pos.length_squared()
@@ -94,6 +94,32 @@ class Triangle:
 			return ab
 		else:
 			return null
+			
+	func get_edge_neighbours():
+		var neighbours = []
+		for triangle in ab.triangles:
+			if triangle != self and triangle not in neighbours:
+				neighbours.append(triangle)
+		for triangle in bc.triangles:
+			if triangle != self and triangle not in neighbours:
+				neighbours.append(triangle)
+		for triangle in ac.triangles:
+			if triangle != self and triangle not in neighbours:
+				neighbours.append(triangle)
+		return neighbours
+
+	func get_vertex_neighbours():
+		var neighbours = []
+		for triangle in a.triangles:
+			if triangle != self and triangle not in neighbours:
+				neighbours.append(triangle)
+		for triangle in b.triangles:
+			if triangle != self and triangle not in neighbours:
+				neighbours.append(triangle)
+		for triangle in c.triangles:
+			if triangle != self and triangle not in neighbours:
+				neighbours.append(triangle)
+		return neighbours
 			
 	func _link_components():
 		_link_component(a)
