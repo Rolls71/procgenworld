@@ -5,7 +5,7 @@ enum ShapeType {CIRCLE, POLYGON}
 static var shape_info: Dictionary
 
 
-static func generate_points_for_circle(circle_position: Vector2, circle_radius: float, poisson_radius: float, retries: int, start_point := Vector2.INF) -> PackedVector2Array:
+static func generate_points_for_circle(circle_position: Vector2, circle_radius: float, poisson_radius: float, retries: int, start_point := Vector2.INF, starting_points: PackedVector2Array = PackedVector2Array()) -> PackedVector2Array:
 	var sample_region_rect = Rect2(circle_position.x - circle_radius, circle_position.y - circle_radius, circle_radius * 2, circle_radius * 2)
 	if start_point.x == INF:
 		var angle: float = 2 * PI * randf()
@@ -18,10 +18,10 @@ static func generate_points_for_circle(circle_position: Vector2, circle_radius: 
 		"circle_position": circle_position,
 		"circle_radius": circle_radius
 	}
-	return _generate_points(ShapeType.CIRCLE, sample_region_rect, poisson_radius, retries, start_point)
+	return _generate_points(ShapeType.CIRCLE, sample_region_rect, poisson_radius, retries, start_point, starting_points)
 
 
-static func generate_points_for_polygon(polygon: PackedVector2Array, poisson_radius: float, retries: int, start_point := Vector2.INF) -> PackedVector2Array:
+static func generate_points_for_polygon(polygon: PackedVector2Array, poisson_radius: float, retries: int, start_point := Vector2.INF, starting_points: PackedVector2Array = PackedVector2Array()) -> PackedVector2Array:
 	var start: Vector2 = polygon[0]
 	var end: Vector2 = polygon[0]
 	for i in range(1, polygon.size()):
@@ -40,12 +40,10 @@ static func generate_points_for_polygon(polygon: PackedVector2Array, poisson_rad
 		return PackedVector2Array()
 	
 	shape_info[ShapeType.POLYGON] = {"points" = polygon}
-	return _generate_points(ShapeType.POLYGON, sample_region_rect, poisson_radius, retries, start_point)
+	return _generate_points(ShapeType.POLYGON, sample_region_rect, poisson_radius, retries, start_point, starting_points)
 
 
-static func _generate_points(shape: int, sample_region_rect: Rect2, poisson_radius: float, retries: int, start_pos: Vector2) -> PackedVector2Array:
-	var points: PackedVector2Array = PackedVector2Array()
-	points.clear()
+static func _generate_points(shape: int, sample_region_rect: Rect2, poisson_radius: float, retries: int, start_pos: Vector2, points: PackedVector2Array) -> PackedVector2Array:
 	var cell_size: float = poisson_radius / sqrt(2)
 	var cols: int = max(floor(sample_region_rect.size.x / cell_size), 1)
 	var rows: int = max(floor(sample_region_rect.size.y / cell_size), 1)

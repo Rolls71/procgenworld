@@ -142,13 +142,12 @@ class Chunk:
 	var edges: Dictionary[Vector4, Edge] = {}
 	var triangles: Dictionary[Vector2, Triangle] = {}
 	var borders: Rect2
-	var x: int
-	var y: int
+	var pos: Vector2i
 	
-	func _init(chunk_x, chunk_y, chunk_borders):
-		x = chunk_x
-		y = chunk_y
+	func _init(_pos: Vector2i, chunk_borders: Rect2):
+		pos = _pos
 		borders = chunk_borders
+		borders.position = Vector2(pos.x*borders.size[0], pos.y*borders.size[1])
 		
 		var corners = [
 			borders.position, 
@@ -156,6 +155,7 @@ class Chunk:
 			borders.position+Vector2(borders.size[0], borders.size[1]),
 			borders.position+Vector2(0, borders.size[1]),
 		]
+		
 		var points = PoissonDiscSampling.generate_points_for_polygon(
 			PackedVector2Array(corners), 
 			EDGE_MIN, 
@@ -183,18 +183,25 @@ class Chunk:
 				ab = edges[Vector4(a.x, a.y, b.x, b.y)]
 			else:
 				ab = Edge.new(vertices[a], vertices[b])
+			if ab.length() > EDGE_MAX or ab.length() < EDGE_MIN:
+				continue
 				
 			if Vector4(b.x, b.y, c.x, c.y) in edges.keys():
 				link_edges.append(Vector4(b.x, b.y, c.x, c.y))
 				bc = edges[Vector4(b.x, b.y, c.x, c.y)]
 			else:
 				bc = Edge.new(vertices[b], vertices[c])
+			if bc.length() > EDGE_MAX or bc.length() < EDGE_MIN:
+				continue
 				
 			if Vector4(a.x, a.y, c.x, c.y) in edges.keys():
 				link_edges.append(Vector4(a.x, a.y, c.x, c.y))
 				ac = edges[Vector4(a.x, a.y, c.x, c.y)]
 			else:
 				ac = Edge.new(vertices[a], vertices[c])
+			if ac.length() > EDGE_MAX or ac.length() < EDGE_MIN:
+				continue
+
 			edges[Vector4(a.x, a.y, b.x, b.y)] = ab
 			edges[Vector4(b.x, b.y, c.x, c.y)] = bc
 			edges[Vector4(a.x, a.y, c.x, c.y)] = ac
@@ -215,17 +222,31 @@ class Chunk:
 var vertices: Array[Vertex]
 var edges: Array[Edge]
 var triangles: Array[Triangle]
-var chunks: Array[Chunk]
+var chunks: Dictionary[Vector2i, Chunk]
 var display_polygons: Array[Polygon2D]
 
 # ==== CONSTRUCTOR =====
 func _init():
-	chunks = [Chunk.new(0,0,Rect2(0,0,1920,1080))]
+	chunks = {}
+	for x in 3:
+		for y in 2:
+			chunks[Vector2i(x, y)] = Chunk.new(Vector2i(x, y),Rect2(0,0,400,400))
+	print(get_neighbouring_chunks(Vector2i(0,0)))
 			
-	
-
-	
-	
-
-
 # ==== PUBLIC FUNCTIONS ====
+func get_neighbouring_chunks(pos: Vector2i) -> Array[Chunk]:
+	var x = pos.x
+	var y = pos.y
+	var neighbours: Array[Chunk] = []
+	for i in range(-1,2):
+		for j in range(-1,2):
+			if i == 0 and j == 0:
+				continue
+			if Vector2i(x+i, y+j) in chunks:
+				neighbours.append(chunks[Vector2i(x+i, y+j)])
+	return neighbours
+	
+	
+
+
+	
