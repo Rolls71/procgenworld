@@ -60,7 +60,6 @@ class Triangle:
 		bc = _bc
 		ac = _ac
 		recalculate_circumcircle()
-		_link_components()
 	
 	func recalculate_circumcircle() -> void:
 		var _ab := a.pos.length_squared()
@@ -121,7 +120,7 @@ class Triangle:
 				neighbours.append(triangle)
 		return neighbours
 			
-	func _link_components():
+	func link_components():
 		_link_component(a)
 		_link_component(b)
 		_link_component(c)
@@ -139,7 +138,7 @@ class Triangle:
 		
 class Chunk:
 	var vertices: Dictionary[Vector2, Vertex] = {}
-	var edges: Dictionary[Vector4, Edge] = {}
+	var edges: Dictionary[Vector2, Edge] = {}
 	var triangles: Dictionary[Vector2, Triangle] = {}
 	var borders: Rect2
 	var pos: Vector2i
@@ -178,33 +177,33 @@ class Chunk:
 			var ab
 			var bc
 			var ac
-			if Vector4(a.x, a.y, b.x, b.y) in edges.keys():
-				link_edges.append(Vector4(a.x, a.y, b.x, b.y))
-				ab = edges[Vector4(a.x, a.y, b.x, b.y)]
+			if (Vector2(a.x, a.y)+Vector2(b.x, b.y))*0.5 in edges.keys():
+				link_edges.append((Vector2(a.x, a.y)+Vector2(b.x, b.y))*0.5)
+				ab = edges[(Vector2(a.x, a.y)+Vector2(b.x, b.y))*0.5]
 			else:
 				ab = Edge.new(vertices[a], vertices[b])
 			if ab.length() > EDGE_MAX or ab.length() < EDGE_MIN:
 				continue
 				
-			if Vector4(b.x, b.y, c.x, c.y) in edges.keys():
-				link_edges.append(Vector4(b.x, b.y, c.x, c.y))
-				bc = edges[Vector4(b.x, b.y, c.x, c.y)]
+			if (Vector2(b.x, b.y)+Vector2(c.x, c.y))*0.5 in edges.keys():
+				link_edges.append((Vector2(b.x, b.y)+Vector2(c.x, c.y))*0.5)
+				bc = edges[(Vector2(b.x, b.y)+Vector2(c.x, c.y))*0.5]
 			else:
 				bc = Edge.new(vertices[b], vertices[c])
 			if bc.length() > EDGE_MAX or bc.length() < EDGE_MIN:
 				continue
 				
-			if Vector4(a.x, a.y, c.x, c.y) in edges.keys():
-				link_edges.append(Vector4(a.x, a.y, c.x, c.y))
-				ac = edges[Vector4(a.x, a.y, c.x, c.y)]
+			if (Vector2(a.x, a.y)+Vector2(c.x, c.y))*0.5 in edges.keys():
+				link_edges.append((Vector2(a.x, a.y)+Vector2(c.x, c.y))*0.5)
+				ac = edges[(Vector2(a.x, a.y)+Vector2(c.x, c.y))*0.5]
 			else:
 				ac = Edge.new(vertices[a], vertices[c])
 			if ac.length() > EDGE_MAX or ac.length() < EDGE_MIN:
 				continue
 
-			edges[Vector4(a.x, a.y, b.x, b.y)] = ab
-			edges[Vector4(b.x, b.y, c.x, c.y)] = bc
-			edges[Vector4(a.x, a.y, c.x, c.y)] = ac
+			edges[(Vector2(a.x, a.y)+Vector2(b.x, b.y))*0.5] = ab
+			edges[(Vector2(b.x, b.y)+Vector2(c.x, c.y))*0.5] = bc
+			edges[(Vector2(a.x, a.y)+Vector2(c.x, c.y))*0.5] = ac
 			
 			var triangle = Triangle.new(
 				vertices[a], 
@@ -217,6 +216,8 @@ class Chunk:
 			
 			if triangle.center not in triangles.keys():
 				triangles[triangle.center] = triangle
+		for key in triangles:
+			triangles[key].link_components()
 		
 	func get_border_edges() -> Array[Edge] :
 		var border_edges: Array[Edge] = []
