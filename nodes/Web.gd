@@ -217,6 +217,14 @@ class Chunk:
 			
 			if triangle.center not in triangles.keys():
 				triangles[triangle.center] = triangle
+		
+	func get_border_edges() -> Array[Edge] :
+		var border_edges: Array[Edge] = []
+		for key in edges:
+			print(key)
+			if edges[key].triangles.size() == 1:
+				border_edges.append(edges[key])
+		return border_edges
 
 # ==== PUBLIC VARIABLES =====
 var vertices: Array[Vertex]
@@ -231,7 +239,7 @@ func _init():
 	for x in 3:
 		for y in 2:
 			chunks[Vector2i(x, y)] = Chunk.new(Vector2i(x, y),Rect2(0,0,400,400))
-	print(get_neighbouring_chunks(Vector2i(0,0)))
+			print(chunks[Vector2i(x, y)].get_border_edges())
 			
 # ==== PUBLIC FUNCTIONS ====
 func get_neighbouring_chunks(pos: Vector2i) -> Array[Chunk]:
@@ -245,7 +253,7 @@ func get_neighbouring_chunks(pos: Vector2i) -> Array[Chunk]:
 			if Vector2i(x+i, y+j) in chunks:
 				neighbours.append(chunks[Vector2i(x+i, y+j)])
 	return neighbours
-	
+
 	
 
 

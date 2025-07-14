@@ -26,10 +26,10 @@ func get_colour():
 			
 static func tally_terrains(arr: Array[TerrainType]) -> Dictionary:
 	var tally = {}
-	for terrain in arr:
-		if not tally.has(terrain):
-			tally[terrain] = 0
-		tally[terrain] += 1
+	for terrain_type in arr:
+		if not tally.has(terrain_type):
+			tally[terrain_type] = 0
+		tally[terrain_type] += 1
 	return tally
 	
 static func pick_highest_tally(arr: Array[TerrainType]) -> TerrainType:
