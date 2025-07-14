@@ -222,10 +222,18 @@ class Chunk:
 	func get_border_edges() -> Array[Edge] :
 		var border_edges: Array[Edge] = []
 		for key in edges:
-			print(key)
 			if edges[key].triangles.size() == 1:
 				border_edges.append(edges[key])
 		return border_edges
+	
+	func get_specific_border_edges(dir: Vector2):
+		var border_edges = get_border_edges()
+		var specific_edges = []
+		for edge in border_edges:
+			var angle = borders.get_center().angle_to_point(edge.center())
+			if abs(angle_difference(dir.angle(), angle)) < PI/4:
+				specific_edges.append(edge)
+		return specific_edges
 
 # ==== PUBLIC VARIABLES =====
 var vertices: Array[Vertex]
@@ -240,7 +248,10 @@ func _init():
 	for x in 3:
 		for y in 2:
 			chunks[Vector2i(x, y)] = Chunk.new(Vector2i(x, y),Rect2(0,0,400,400))
-			print(chunks[Vector2i(x, y)].get_border_edges())
+			#print("RIGHT ", chunks[Vector2i(x, y)].get_specific_border_edges(Vector2i.RIGHT))
+			#print("DOWN ", chunks[Vector2i(x, y)].get_specific_border_edges(Vector2i.DOWN))
+			#chunks[Vector2i(x, y)].get_specific_border_edges(Vector2i.LEFT)
+			#chunks[Vector2i(x, y)].get_specific_border_edges(Vector2i.UP)
 			
 # ==== PUBLIC FUNCTIONS ====
 func get_neighbouring_chunks(pos: Vector2i) -> Array[Chunk]:
