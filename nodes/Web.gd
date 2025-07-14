@@ -5,6 +5,8 @@ class_name Web
 const EDGE_MIN: float = 40
 const EDGE_MAX: float = 100
 const POISSON_SAMPLE_ATTEMPTS: int = 15
+const DIRECTIONS: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP]
+const CHUNK_BORDER_WIDTH: int = 400
 
 # ==== CLASSES ====
 
@@ -37,6 +39,9 @@ class Edge:
 	
 	func center() -> Vector2:
 		return (a.pos + b.pos) * 0.5
+	
+	func points() -> PackedVector2Array:
+		return PackedVector2Array([a, b])
 	
 
 class Triangle:
@@ -233,6 +238,7 @@ class Chunk:
 			var angle = borders.get_center().angle_to_point(edge.center())
 			if abs(angle_difference(dir.angle(), angle)) < PI/4:
 				specific_edges.append(edge)
+				
 		return specific_edges
 
 # ==== PUBLIC VARIABLES =====
@@ -247,7 +253,7 @@ func _init():
 	chunks = {}
 	for x in 3:
 		for y in 2:
-			chunks[Vector2i(x, y)] = Chunk.new(Vector2i(x, y),Rect2(0,0,400,400))
+			chunks[Vector2i(x, y)] = Chunk.new(Vector2i(x, y),Rect2(0,0,CHUNK_BORDER_WIDTH,CHUNK_BORDER_WIDTH))
 			#print("RIGHT ", chunks[Vector2i(x, y)].get_specific_border_edges(Vector2i.RIGHT))
 			#print("DOWN ", chunks[Vector2i(x, y)].get_specific_border_edges(Vector2i.DOWN))
 			#chunks[Vector2i(x, y)].get_specific_border_edges(Vector2i.LEFT)
@@ -265,7 +271,54 @@ func get_neighbouring_chunks(pos: Vector2i) -> Array[Chunk]:
 			if Vector2i(x+i, y+j) in chunks:
 				neighbours.append(chunks[Vector2i(x+i, y+j)])
 	return neighbours
+	
+func get_bordering_points(pos: Vector2i) -> PackedVector2Array:
+	var points: Array[Vector2] = []
+	for dir in DIRECTIONS:
+		if chunks.has(pos+dir):
+			var edges = chunks[pos+dir].get_specific_border_edges(-dir)
+			for edge in edges:
+				if edge.a.pos not in points:
+					points.append(edge.a.pos)
+				if edge.b.pos not in points:
+					points.append(edge.b.pos)
+		else:
+			match dir:
+				Vector2i.RIGHT:
+					points.append(Vector2(pos)*CHUNK_BORDER_WIDTH+Vector2.RIGHT*CHUNK_BORDER_WIDTH)
+				Vector2i.DOWN:
+					points.append(Vector2(pos)*CHUNK_BORDER_WIDTH+Vector2.ONE*CHUNK_BORDER_WIDTH)
+				Vector2i.LEFT:
+					points.append(Vector2(pos)*CHUNK_BORDER_WIDTH+Vector2.DOWN*CHUNK_BORDER_WIDTH)
+				Vector2i.UP:
+					points.append(Vector2(pos)*CHUNK_BORDER_WIDTH+Vector2.ZERO*CHUNK_BORDER_WIDTH)
+					
+	var ordered_pts = PackedVector2Array(clockwise_points(pos*CHUNK_BORDER_WIDTH-Vector2i(Vector2.ONE*0.5*CHUNK_BORDER_WIDTH), points))
+	ordered_pts.append(ordered_pts[0])
+	print(ordered_pts)
+	return PackedVector2Array(ordered_pts)
 
+func clockwise_points(center:Vector2, surrounding:Array[Vector2]):
+	var result: Array[Vector2] = []
+	var angles: Array = []
+	var sorted_indices: Array[int] = []
+	for point in surrounding:
+		angles.append(center.angle_to_point(point))
+	var remaining_indices: Array[int] = [] 
+	for angle in range(angles.size()):
+		remaining_indices.append(angle)
+	for angle in range(angles.size()):
+		var currentMin = PI
+		var current_test_index = 0
+		for test in range(remaining_indices.size()):
+			if (angles[remaining_indices[test]] < currentMin):
+				current_test_index = test
+				currentMin = angles[remaining_indices[test]]
+		sorted_indices.append(remaining_indices[current_test_index])
+		remaining_indices.pop_at(current_test_index)
+	for index in sorted_indices:
+		result.append(surrounding[index])
+	return result
 	
 
 

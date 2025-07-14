@@ -37,3 +37,5 @@ func _draw():
 					
 		for vertex in web.chunks[key].vertices.values():
 			draw_circle(vertex.pos, 5, Color.RED)
+	
+	draw_colored_polygon(web.get_bordering_points(Vector2i(1,1)), Color.PURPLE)
