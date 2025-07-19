@@ -276,8 +276,8 @@ func get_bordering_points(pos: Vector2i) -> PackedVector2Array:
 	var points: Array[Vector2] = []
 	for dir in DIRECTIONS:
 		if chunks.has(pos+dir):
-			var edges = chunks[pos+dir].get_specific_border_edges(-dir)
-			for edge in edges:
+			var border_edges = chunks[pos+dir].get_specific_border_edges(-dir)
+			for edge in border_edges:
 				if edge.a.pos not in points:
 					points.append(edge.a.pos)
 				if edge.b.pos not in points:
@@ -292,32 +292,29 @@ func get_bordering_points(pos: Vector2i) -> PackedVector2Array:
 					points.append(Vector2(pos)*CHUNK_BORDER_WIDTH+Vector2.DOWN*CHUNK_BORDER_WIDTH)
 				Vector2i.UP:
 					points.append(Vector2(pos)*CHUNK_BORDER_WIDTH+Vector2.ZERO*CHUNK_BORDER_WIDTH)
-					
-	var ordered_pts = PackedVector2Array(clockwise_points(pos*CHUNK_BORDER_WIDTH-Vector2i(Vector2.ONE*0.5*CHUNK_BORDER_WIDTH), points))
+	var avg_point = Vector2.ZERO
+	for point in points:
+		avg_point += point
+	avg_point /= points.size()
+	var ordered_pts = PackedVector2Array(clockwise_points(avg_point, points))
 	ordered_pts.append(ordered_pts[0])
 	print(ordered_pts)
 	return PackedVector2Array(ordered_pts)
 
+func sort_ascending(a, b):
+	if a[1] < b[1]:
+		return true
+	return false
+
 func clockwise_points(center:Vector2, surrounding:Array[Vector2]):
-	var result: Array[Vector2] = []
-	var angles: Array = []
-	var sorted_indices: Array[int] = []
+	var arr: Array = []
 	for point in surrounding:
-		angles.append(center.angle_to_point(point))
-	var remaining_indices: Array[int] = [] 
-	for angle in range(angles.size()):
-		remaining_indices.append(angle)
-	for angle in range(angles.size()):
-		var currentMin = PI
-		var current_test_index = 0
-		for test in range(remaining_indices.size()):
-			if (angles[remaining_indices[test]] < currentMin):
-				current_test_index = test
-				currentMin = angles[remaining_indices[test]]
-		sorted_indices.append(remaining_indices[current_test_index])
-		remaining_indices.pop_at(current_test_index)
-	for index in sorted_indices:
-		result.append(surrounding[index])
+		arr.append([point, center.angle_to_point(point)])
+	arr.sort_custom(sort_ascending)
+	var result: Array[Vector2] = []
+	for i in arr.size():
+		result.append(arr[i][0])
+	
 	return result
 	
 

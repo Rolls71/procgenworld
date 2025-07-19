@@ -6,6 +6,10 @@ func _init():
 	web = Web.new()
 	
 func _draw():
+	
+	var pts = web.get_bordering_points(Vector2i(1,1))
+	draw_colored_polygon(pts, Color.PURPLE)
+	
 	for key in web.chunks:
 		var triangles_shuffled = web.chunks[key].triangles.values().duplicate()
 		triangles_shuffled.shuffle()
@@ -38,4 +42,3 @@ func _draw():
 		for vertex in web.chunks[key].vertices.values():
 			draw_circle(vertex.pos, 5, Color.RED)
 	
-	draw_colored_polygon(web.get_bordering_points(Vector2i(1,1)), Color.PURPLE)
