@@ -145,27 +145,19 @@ class Chunk:
 	var vertices: Dictionary[Vector2, Vertex] = {}
 	var edges: Dictionary[Vector2, Edge] = {}
 	var triangles: Dictionary[Vector2, Triangle] = {}
-	var borders: Rect2
+	var borders: PackedVector2Array
 	var pos: Vector2i
 	
-	func _init(_pos: Vector2i, chunk_borders: Rect2):
+	func _init(_pos: Vector2i, chunk_borders: PackedVector2Array):
 		pos = _pos
 		borders = chunk_borders
-		borders.position = Vector2(pos.x*borders.size[0], pos.y*borders.size[1])
-		
-		var corners = [
-			borders.position, 
-			borders.position+Vector2(borders.size[0], 0),
-			borders.position+Vector2(borders.size[0], borders.size[1]),
-			borders.position+Vector2(0, borders.size[1]),
-		]
 		
 		var points = PoissonDiscSampling.generate_points_for_polygon(
-			PackedVector2Array(corners), 
+			borders, 
 			EDGE_MIN, 
 			POISSON_SAMPLE_ATTEMPTS
 		)
-		var delaunay = Delaunay.new(borders)
+		var delaunay = Delaunay.new(Rect2())
 		for point in points:
 			vertices[point] = Vertex.new(point)
 			delaunay.add_point(point)
@@ -235,7 +227,11 @@ class Chunk:
 		var border_edges = get_border_edges()
 		var specific_edges = []
 		for edge in border_edges:
-			var angle = borders.get_center().angle_to_point(edge.center())
+			var avg_point = Vector2.ZERO
+			for point in borders:
+				avg_point += point
+			avg_point /= borders.size()
+			var angle = avg_point.angle_to_point(edge.center())
 			if abs(angle_difference(dir.angle(), angle)) < PI/4:
 				specific_edges.append(edge)
 				
@@ -253,7 +249,8 @@ func _init():
 	chunks = {}
 	for x in 3:
 		for y in 2:
-			chunks[Vector2i(x, y)] = Chunk.new(Vector2i(x, y),Rect2(0,0,CHUNK_BORDER_WIDTH,CHUNK_BORDER_WIDTH))
+			var pos = Vector2i(x, y)
+			chunks[pos] = Chunk.new(pos,get_bordering_points(pos))
 			#print("RIGHT ", chunks[Vector2i(x, y)].get_specific_border_edges(Vector2i.RIGHT))
 			#print("DOWN ", chunks[Vector2i(x, y)].get_specific_border_edges(Vector2i.DOWN))
 			#chunks[Vector2i(x, y)].get_specific_border_edges(Vector2i.LEFT)
@@ -292,20 +289,24 @@ func get_bordering_points(pos: Vector2i) -> PackedVector2Array:
 					points.append(Vector2(pos)*CHUNK_BORDER_WIDTH+Vector2.DOWN*CHUNK_BORDER_WIDTH)
 				Vector2i.UP:
 					points.append(Vector2(pos)*CHUNK_BORDER_WIDTH+Vector2.ZERO*CHUNK_BORDER_WIDTH)
+
+	var ordered_pts = PackedVector2Array(clockwise_points(get_avg_point(points), points))
+	ordered_pts.append(ordered_pts[0])
+	print(ordered_pts)
+	return PackedVector2Array(ordered_pts)
+
+func get_avg_point(points):
 	var avg_point = Vector2.ZERO
 	for point in points:
 		avg_point += point
 	avg_point /= points.size()
-	var ordered_pts = PackedVector2Array(clockwise_points(avg_point, points))
-	ordered_pts.append(ordered_pts[0])
-	print(ordered_pts)
-	return PackedVector2Array(ordered_pts)
+	return avg_point
+
 
 func sort_ascending(a, b):
 	if a[1] < b[1]:
 		return true
 	return false
-
 func clockwise_points(center:Vector2, surrounding:Array[Vector2]):
 	var arr: Array = []
 	for point in surrounding:
