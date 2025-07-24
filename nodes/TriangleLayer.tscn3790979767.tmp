@@ -4,7 +4,3 @@
 
 [node name="TriangleLayer" type="Node2D"]
 script = ExtResource("1_dvtcf")
-
-[node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(1, 4)
-offset = Vector2(83.575, 0)

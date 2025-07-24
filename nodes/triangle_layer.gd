@@ -19,6 +19,7 @@ func _draw():
 				terrain.set_to(Terrain.pick_highest_tally(options))
 			triangle.terrain = terrain
 			draw_colored_polygon(triangle.get_packed_vec_array(), terrain.get_colour())
+	for key in web.chunks:
 		var borders = web.chunks[key].get_border_edges()
 		for edge in web.chunks[key].edges.values():
 			if edge in borders:
@@ -26,5 +27,9 @@ func _draw():
 			else:
 				draw_line(edge.a.pos, edge.b.pos, Color.BLACK)
 					
-		for vertex in web.chunks[key].vertices.values():
-			draw_circle(vertex.pos, 5, Color.RED)
+	var color = Color(randf(), randf(), randf())
+	for key in web.chunks:
+		for point in web.chunks[key].points:
+			draw_circle(point, 5, color)
+		color = Color(randf(), randf(), randf())
+			

@@ -5,6 +5,8 @@ class_name Web
 const EDGE_MIN: float = 40
 const EDGE_MAX: float = 100
 const POISSON_SAMPLE_ATTEMPTS: int = 15
+const CHUNK_WIDTH: float = 200
+const CORNERS: Array[Vector2] = [Vector2.ZERO, Vector2.RIGHT, Vector2.ONE, Vector2.DOWN]
 
 # ==== CLASSES ====
 
@@ -48,7 +50,7 @@ class Triangle:
 	var bc: Edge
 	var ac: Edge
 	
-	var center: Vector2
+	var _center: Vector2
 	var radius_sqr: float
 	var terrain: Terrain
 	
@@ -61,6 +63,10 @@ class Triangle:
 		ac = _ac
 		recalculate_circumcircle()
 	
+	func get_center():
+		recalculate_circumcircle()
+		return _center
+	
 	func recalculate_circumcircle() -> void:
 		var _ab := a.pos.length_squared()
 		var _cd := b.pos.length_squared()
@@ -71,15 +77,17 @@ class Triangle:
 		var bma := b.pos - a.pos
 	
 		var circum := Vector2(
-			(_ab * cmb.y + _cd * amc.y + _ef * bma.y) / (a.pos.x * cmb.y + b.pos.x * amc.y + c.pos.x * bma.y),
-			(_ab * cmb.x + _cd * amc.x + _ef * bma.x) / (a.pos.y * cmb.x + b.pos.y * amc.x + c.pos.y * bma.x)
+			(_ab * cmb.y + _cd * amc.y + _ef * bma.y) / 
+				(a.pos.x * cmb.y + b.pos.x * amc.y + c.pos.x * bma.y),
+			(_ab * cmb.x + _cd * amc.x + _ef * bma.x) / 
+				(a.pos.y * cmb.x + b.pos.y * amc.x + c.pos.y * bma.x)
 		)
 	
-		center = circum * 0.5
-		radius_sqr = a.pos.distance_squared_to(center)
+		_center = circum * 0.5
+		radius_sqr = a.pos.distance_squared_to(_center)
 	
 	func is_point_inside_circumcircle(point: Vector2) -> bool:
-		return center.distance_squared_to(point) < radius_sqr
+		return _center.distance_squared_to(point) < radius_sqr
 	
 	func is_corner(point: Vector2) -> bool:
 		return point == a.pos || point == b.pos || point == c.pos
@@ -142,43 +150,63 @@ class Chunk:
 	var triangles: Dictionary[Vector2, Triangle] = {}
 	var borders: Rect2
 	var pos: Vector2i
+	var neighbours: Array[Chunk]
+	var points: PackedVector2Array = []
 	
-	func _init(_pos: Vector2i, chunk_borders: Rect2):
+	func _init(_pos: Vector2i, _neighbours: Array[Chunk]):
 		pos = _pos
-		borders = chunk_borders
-		borders.position = Vector2(pos.x*borders.size[0], pos.y*borders.size[1])
+		borders = Rect2(pos*CHUNK_WIDTH, Vector2.ONE*CHUNK_WIDTH)
+		neighbours = _neighbours
 		
-		var corners = [
-			borders.position, 
-			borders.position+Vector2(borders.size[0], 0),
-			borders.position+Vector2(borders.size[0], borders.size[1]),
-			borders.position+Vector2(0, borders.size[1]),
-		]
+		var neighbourhood_borders = borders.grow(CHUNK_WIDTH)
+		var border_corners = []
+		for direction in CORNERS:
+			border_corners.append(
+				borders.position+borders.size*direction)
+		var start_points = []
+		for neighbour in neighbours:
+			for key in neighbour.vertices:
+				start_points.append(neighbour.vertices[key].pos)
 		
-		var points = PoissonDiscSampling.generate_points_for_polygon(
-			PackedVector2Array(corners), 
+		points = PoissonDiscSampling.generate_points_for_polygon(
+			PackedVector2Array(border_corners), 
 			EDGE_MIN, 
-			POISSON_SAMPLE_ATTEMPTS
+			POISSON_SAMPLE_ATTEMPTS,
+			Vector2.INF,
+			PackedVector2Array(start_points)
 		)
+		
+		for neighbour in neighbours:
+			for key in neighbour.vertices:
+				var vertex:Vertex = neighbour.vertices[key]
+				if borders.grow(EDGE_MAX).has_point(vertex.pos):
+					vertices[vertex.pos] = neighbour.vertices[vertex.pos]
+					for edge in vertex.edges:
+						edges[edge.center()] = edge
+					for triangle in vertex.triangles:
+						triangles[triangle._center] = triangle
+		
 		var delaunay = Delaunay.new(borders)
 		for point in points:
-			vertices[point] = Vertex.new(point)
 			delaunay.add_point(point)
 			
 		var triangulation: Array[Delaunay.Triangle] = delaunay.triangulate()
 		delaunay.remove_border_triangles(triangulation)
 		for delaunay_triangle in triangulation:
+			
 			var a = delaunay_triangle.a
 			var b = delaunay_triangle.b
 			var c = delaunay_triangle.c
+			if not (borders.has_point(a) or borders.has_point(b) or borders.has_point(c)):
+				continue
+			for i in [a, b, c]:
+				if i not in vertices:
+						vertices[i] = Vertex.new(i)
 			
-			# if edge is already chosen, link triangle isntead of new edge
-			var link_edges = []
 			var ab
 			var bc
 			var ac
 			if (Vector2(a.x, a.y)+Vector2(b.x, b.y))*0.5 in edges.keys():
-				link_edges.append((Vector2(a.x, a.y)+Vector2(b.x, b.y))*0.5)
 				ab = edges[(Vector2(a.x, a.y)+Vector2(b.x, b.y))*0.5]
 			else:
 				ab = Edge.new(vertices[a], vertices[b])
@@ -186,7 +214,6 @@ class Chunk:
 				continue
 				
 			if (Vector2(b.x, b.y)+Vector2(c.x, c.y))*0.5 in edges.keys():
-				link_edges.append((Vector2(b.x, b.y)+Vector2(c.x, c.y))*0.5)
 				bc = edges[(Vector2(b.x, b.y)+Vector2(c.x, c.y))*0.5]
 			else:
 				bc = Edge.new(vertices[b], vertices[c])
@@ -194,7 +221,6 @@ class Chunk:
 				continue
 				
 			if (Vector2(a.x, a.y)+Vector2(c.x, c.y))*0.5 in edges.keys():
-				link_edges.append((Vector2(a.x, a.y)+Vector2(c.x, c.y))*0.5)
 				ac = edges[(Vector2(a.x, a.y)+Vector2(c.x, c.y))*0.5]
 			else:
 				ac = Edge.new(vertices[a], vertices[c])
@@ -205,7 +231,7 @@ class Chunk:
 			edges[(Vector2(b.x, b.y)+Vector2(c.x, c.y))*0.5] = bc
 			edges[(Vector2(a.x, a.y)+Vector2(c.x, c.y))*0.5] = ac
 			
-			var triangle = Triangle.new(
+			var triangle:Triangle = Triangle.new(
 				vertices[a], 
 				vertices[b], 
 				vertices[c],
@@ -214,15 +240,14 @@ class Chunk:
 				ac,
 			)
 			
-			if triangle.center not in triangles.keys():
-				triangles[triangle.center] = triangle
+			if triangle._center not in triangles.keys():
+				triangles[triangle._center] = triangle
 		for key in triangles:
 			triangles[key].link_components()
 		
 	func get_border_edges() -> Array[Edge] :
 		var border_edges: Array[Edge] = []
 		for key in edges:
-			print(key)
 			if edges[key].triangles.size() == 1:
 				border_edges.append(edges[key])
 		return border_edges
@@ -239,8 +264,7 @@ func _init():
 	chunks = {}
 	for x in 3:
 		for y in 2:
-			chunks[Vector2i(x, y)] = Chunk.new(Vector2i(x, y),Rect2(0,0,400,400))
-			print(chunks[Vector2i(x, y)].get_border_edges())
+			chunks[Vector2i(x, y)] = Chunk.new(Vector2i(x, y), get_neighbouring_chunks(Vector2i(x, y)))
 			
 # ==== PUBLIC FUNCTIONS ====
 func get_neighbouring_chunks(pos: Vector2i) -> Array[Chunk]:
